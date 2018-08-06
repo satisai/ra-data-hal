@@ -1,0 +1,25 @@
+{
+  "name": "ra-data-hal",
+  "version": "1.0.0",
+  "description": "A HAL data provider for react-admin.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --require babel-polyfill --require babel-core/register --recursive ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/b-social/ra-data-hal.git"
+  },
+  "keywords": [
+    "hal",
+    "react-admin",
+    "data",
+    "provider"
+  ],
+  "author": "Toby Clemson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/b-social/ra-data-hal/issues"
+  },
+  "homepage": "https://github.com/b-social/ra-data-hal#readme"
+}
