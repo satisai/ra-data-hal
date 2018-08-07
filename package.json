@@ -30,6 +30,13 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
+  "dependencies": {
+    "capitalize": "^1.0.0",
+    "halboy": "^0.5.0",
+    "react": "^16.4.2",
+    "react-admin": "^2.2.0",
+    "react-dom": "^16.4.2"
+  },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
@@ -38,6 +45,7 @@
     "chai": "^4.1.2",
     "faker": "^4.1.0",
     "mocha": "^5.2.0",
+    "nock": "^9.4.4",
     "standard": "^11.0.1"
   }
 }
