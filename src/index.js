@@ -1,17 +1,10 @@
 import {
-  fetchUtils,
-  GET_LIST,
+  GET_LIST
 } from 'react-admin'
 import {
   Navigator
 } from 'halboy'
 import capitalize from 'capitalize'
-
-const convertDataRequestToHalRequest =
-  (apiUrl, type, resource, params) => {}
-
-const convertHalResponseToDataResponse =
-  (response, type, resource, params) => {}
 
 export default (apiUrl) => {
   /**
@@ -37,11 +30,11 @@ export default (apiUrl) => {
         } = params
 
         const paginationParams = {
-          "page": page,
-          "perPage": perPage,
+          'page': page,
+          'perPage': perPage
         }
         const sortParams = {
-          "sort": JSON.stringify([field, order.toLowerCase()])
+          'sort': JSON.stringify([field, order.toLowerCase()])
         }
         const resourceResult = await discoveryResult.get(resourceName, {
           ...paginationParams,

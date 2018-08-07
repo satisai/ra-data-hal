@@ -18,77 +18,77 @@ describe('react-admin HAL data provider', () => {
   describe('on GET_LIST', () => {
     it('fetches the resource based on discovery with pagination and sort ' +
       'query parameters',
-      async () => {
-        const apiUrl = faker.internet.url()
-        const page = 3
-        const perPage = 2
-        const field = 'title'
-        const order = 'asc'
+    async () => {
+      const apiUrl = faker.internet.url()
+      const page = 3
+      const perPage = 2
+      const field = 'title'
+      const order = 'asc'
 
-        const post1Resource = new Resource()
-          .addLinks({
-            self: `${apiUrl}/posts/${faker.random.uuid()}`
-          })
-          .addProperties({
-            title: 'My first post',
-            author: 'Jenny'
-          })
-
-        const post2Resource = new Resource()
-          .addLinks({
-            self: `${apiUrl}/posts/${faker.random.uuid()}`
-          })
-          .addProperties({
-            title: 'My second post',
-            author: 'James'
-          })
-
-        api.onDiscover(apiUrl, {
-          self: `${apiUrl}/`,
-          posts: {
-            href: `${apiUrl}/posts{?page,perPage,sort*}`,
-            templated: true
-          }
+      const post1Resource = new Resource()
+        .addLinks({
+          self: `${apiUrl}/posts/${faker.random.uuid()}`
+        })
+        .addProperties({
+          title: 'My first post',
+          author: 'Jenny'
         })
 
-        api.onGet(
-          apiUrl, `/posts`, {
-            page,
-            perPage,
-            sort: `["${field}","${order}"]`
-          },
-          new Resource()
-            .addLinks({
-              self: {
-                href: `/posts`
-              }
-            })
-            .addProperty('totalPosts', 36)
-            .addResource('posts', post1Resource)
-            .addResource('posts', post2Resource))
-
-        const dataProvider = halDataProvider(apiUrl)
-
-        const result = await dataProvider(GET_LIST, 'posts', {
-          pagination: { page, perPage },
-          sort: { field, order },
+      const post2Resource = new Resource()
+        .addLinks({
+          self: `${apiUrl}/posts/${faker.random.uuid()}`
+        })
+        .addProperties({
+          title: 'My second post',
+          author: 'James'
         })
 
-        expect(result).to.eql({
-          data: [
-            {
-              id: post1Resource.getHref('self'),
-              title: post1Resource.getProperty('title'),
-              author: post1Resource.getProperty('author')
-            },
-            {
-              id: post2Resource.getHref('self'),
-              title: post2Resource.getProperty('title'),
-              author: post2Resource.getProperty('author')
-            }
-          ],
-          total: 36
-        })
+      api.onDiscover(apiUrl, {
+        self: `${apiUrl}/`,
+        posts: {
+          href: `${apiUrl}/posts{?page,perPage,sort*}`,
+          templated: true
+        }
       })
+
+      api.onGet(
+        apiUrl, `/posts`, {
+          page,
+          perPage,
+          sort: `["${field}","${order}"]`
+        },
+        new Resource()
+          .addLinks({
+            self: {
+              href: `/posts`
+            }
+          })
+          .addProperty('totalPosts', 36)
+          .addResource('posts', post1Resource)
+          .addResource('posts', post2Resource))
+
+      const dataProvider = halDataProvider(apiUrl)
+
+      const result = await dataProvider(GET_LIST, 'posts', {
+        pagination: { page, perPage },
+        sort: { field, order }
+      })
+
+      expect(result).to.eql({
+        data: [
+          {
+            id: post1Resource.getHref('self'),
+            title: post1Resource.getProperty('title'),
+            author: post1Resource.getProperty('author')
+          },
+          {
+            id: post2Resource.getHref('self'),
+            title: post2Resource.getProperty('title'),
+            author: post2Resource.getProperty('author')
+          }
+        ],
+        total: 36
+      })
+    })
   })
 })
