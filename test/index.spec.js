@@ -1,6 +1,7 @@
 import { expect } from 'chai'
 import faker from 'faker'
 import nock from 'nock'
+import qs from 'qs'
 import { Resource } from 'halboy'
 import {
   GET_LIST
@@ -16,14 +17,18 @@ describe('react-admin HAL data provider', () => {
   })
 
   describe('on GET_LIST', () => {
-    it('fetches the resource based on discovery with pagination and sort ' +
-      'query parameters',
+    it('fetches the resource based on discovery with pagination, sort ' +
+      'and filter query parameters',
     async () => {
       const apiUrl = faker.internet.url()
       const page = 3
       const perPage = 2
-      const field = 'title'
-      const order = 'asc'
+      const sortField = 'title'
+      const sortOrder = 'asc'
+      const filterField1 = 'active'
+      const filterValue1 = 'true'
+      const filterField2 = 'tag'
+      const filterValue2 = 'article'
 
       const post1Resource = new Resource()
         .addLinks({
@@ -31,7 +36,9 @@ describe('react-admin HAL data provider', () => {
         })
         .addProperties({
           title: 'My first post',
-          author: 'Jenny'
+          author: 'Jenny',
+          active: true,
+          tag: 'article'
         })
 
       const post2Resource = new Resource()
@@ -40,23 +47,33 @@ describe('react-admin HAL data provider', () => {
         })
         .addProperties({
           title: 'My second post',
-          author: 'James'
+          author: 'James',
+          active: true,
+          tag: 'article'
         })
+
+      const expectedQueryParams = {
+        page,
+        perPage,
+        sort: `["${sortField}","${sortOrder}"]`,
+        filter: [
+          `["${filterField1}","${filterValue1}"]`,
+          `["${filterField2}","${filterValue2}"]`
+        ]
+      }
+      const expectedQueryString =
+        qs.stringify(expectedQueryParams, {arrayFormat: 'repeat'})
 
       api.onDiscover(apiUrl, {
         self: `${apiUrl}/`,
         posts: {
-          href: `${apiUrl}/posts{?page,perPage,sort*}`,
+          href: `${apiUrl}/posts{?page,perPage,sort*,filter*}`,
           templated: true
         }
       })
 
       api.onGet(
-        apiUrl, `/posts`, {
-          page,
-          perPage,
-          sort: `["${field}","${order}"]`
-        },
+        apiUrl, `/posts?${expectedQueryString}`,
         new Resource()
           .addLinks({
             self: {
@@ -71,7 +88,11 @@ describe('react-admin HAL data provider', () => {
 
       const result = await dataProvider(GET_LIST, 'posts', {
         pagination: { page, perPage },
-        sort: { field, order }
+        sort: { field: sortField, order: sortOrder },
+        filter: {
+          [filterField1]: filterValue1,
+          [filterField2]: filterValue2
+        }
       })
 
       expect(result).to.eql({
@@ -79,12 +100,16 @@ describe('react-admin HAL data provider', () => {
           {
             id: post1Resource.getHref('self'),
             title: post1Resource.getProperty('title'),
-            author: post1Resource.getProperty('author')
+            author: post1Resource.getProperty('author'),
+            active: post1Resource.getProperty('active'),
+            tag: post1Resource.getProperty('tag')
           },
           {
             id: post2Resource.getHref('self'),
             title: post2Resource.getProperty('title'),
-            author: post2Resource.getProperty('author')
+            author: post2Resource.getProperty('author'),
+            active: post2Resource.getProperty('active'),
+            tag: post2Resource.getProperty('tag')
           }
         ],
         total: 36

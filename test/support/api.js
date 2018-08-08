@@ -1,5 +1,6 @@
 import nock from 'nock'
 import { Resource } from 'halboy'
+import qs from 'qs'
 
 export const onDiscover = (url, links) =>
   nock(url).get('/')
@@ -8,9 +9,13 @@ export const onDiscover = (url, links) =>
         .addLinks(links)
         .toObject())
 
-export const onGet = (url, path, queryParams, resource, { headers } = {}) => {
-  nock(url, { reqHeaders: headers })
+export const onGet = (url, path, resource, {headers} = {}) => {
+  nock(url, {
+    reqHeaders: headers,
+    paramsSerializer: (params) => {
+      return qs.stringify(params, {arrayFormat: 'repeat'})
+    }
+  })
     .get(path)
-    .query(queryParams)
     .reply(200, resource.toObject())
 }

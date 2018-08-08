@@ -5,6 +5,8 @@ import {
   Navigator
 } from 'halboy'
 import capitalize from 'capitalize'
+import { reduce, toPairs, append } from 'ramda'
+import qs from 'qs'
 
 export default (apiUrl) => {
   /**
@@ -26,7 +28,8 @@ export default (apiUrl) => {
       case GET_LIST: {
         const {
           pagination: { page, perPage },
-          sort: { field, order }
+          sort: { field, order },
+          filter
         } = params
 
         const paginationParams = {
@@ -36,10 +39,22 @@ export default (apiUrl) => {
         const sortParams = {
           'sort': JSON.stringify([field, order.toLowerCase()])
         }
-        const resourceResult = await discoveryResult.get(resourceName, {
+        const filterParams = {
+          'filter': reduce((filters, [field, value]) => {
+            return append(JSON.stringify([field, value]), filters)
+          }, [], toPairs(filter))
+        }
+        const fullParams = {
           ...paginationParams,
-          ...sortParams
-        })
+          ...sortParams,
+          ...filterParams
+        }
+        const resourceResult = await
+          discoveryResult.get(resourceName, fullParams, {
+            paramsSerializer: (params) => {
+              return qs.stringify(params, {arrayFormat: 'repeat'})
+            }
+          })
         const resource = resourceResult.resource()
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
         const data = resource.getResource(resourceName)
