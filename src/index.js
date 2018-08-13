@@ -1,9 +1,11 @@
 import {
-  GET_LIST
+  GET_LIST,
+  GET_ONE
 } from 'react-admin'
 import {
   Navigator
 } from 'halboy'
+import inflection from 'inflection'
 import capitalize from 'capitalize'
 import { reduce, toPairs, append } from 'ramda'
 import qs from 'qs'
@@ -64,6 +66,17 @@ export default (apiUrl) => {
           }))
 
         return { data, total }
+      }
+      case GET_ONE: {
+        const resourceResult = await
+          discoveryResult.get(inflection.singularize(resourceName), params)
+        const resource = resourceResult.resource()
+        const data = {
+          ...resource.getProperties(),
+          links: resource.links
+        }
+
+        return { data }
       }
       default:
         throw new Error(`Unsupported fetch action type ${type}`)
