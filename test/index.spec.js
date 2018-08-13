@@ -30,7 +30,6 @@ describe('react-admin HAL data provider', () => {
       const filterField2 = 'tag'
       const filterValue2 = 'article'
 
-
       const post1Id = faker.random.uuid()
       const post1Resource = new Resource()
         .addLinks({

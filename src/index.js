@@ -60,7 +60,7 @@ export default (apiUrl) => {
         const data = resource.getResource(resourceName)
           .map(r => ({
             ...r.getProperties(),
-            links: r.links,
+            links: r.links
           }))
 
         return { data, total }
