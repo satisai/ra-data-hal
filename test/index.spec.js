@@ -30,22 +30,27 @@ describe('react-admin HAL data provider', () => {
       const filterField2 = 'tag'
       const filterValue2 = 'article'
 
+
+      const post1Id = faker.random.uuid()
       const post1Resource = new Resource()
         .addLinks({
-          self: `${apiUrl}/posts/${faker.random.uuid()}`
+          self: `${apiUrl}/posts/${post1Id}`
         })
         .addProperties({
+          id: post1Id,
           title: 'My first post',
           author: 'Jenny',
           active: true,
           tag: 'article'
         })
 
+      const post2Id = faker.random.uuid()
       const post2Resource = new Resource()
         .addLinks({
-          self: `${apiUrl}/posts/${faker.random.uuid()}`
+          self: `${apiUrl}/posts/${post2Id}`
         })
         .addProperties({
+          id: post2Id,
           title: 'My second post',
           author: 'James',
           active: true,
@@ -98,18 +103,24 @@ describe('react-admin HAL data provider', () => {
       expect(result).to.eql({
         data: [
           {
-            id: post1Resource.getHref('self'),
+            id: post1Resource.getProperty('id'),
             title: post1Resource.getProperty('title'),
             author: post1Resource.getProperty('author'),
             active: post1Resource.getProperty('active'),
-            tag: post1Resource.getProperty('tag')
+            tag: post1Resource.getProperty('tag'),
+            links: {
+              self: { href: post1Resource.getHref('self') }
+            }
           },
           {
-            id: post2Resource.getHref('self'),
+            id: post2Resource.getProperty('id'),
             title: post2Resource.getProperty('title'),
             author: post2Resource.getProperty('author'),
             active: post2Resource.getProperty('active'),
-            tag: post2Resource.getProperty('tag')
+            tag: post2Resource.getProperty('tag'),
+            links: {
+              self: { href: post2Resource.getHref('self') }
+            }
           }
         ],
         total: 36

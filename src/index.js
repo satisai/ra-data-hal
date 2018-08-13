@@ -59,8 +59,8 @@ export default (apiUrl) => {
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
         const data = resource.getResource(resourceName)
           .map(r => ({
-            id: r.getHref('self'),
-            ...r.getProperties()
+            ...r.getProperties(),
+            links: r.links,
           }))
 
         return { data, total }
