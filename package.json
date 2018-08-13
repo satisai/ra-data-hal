@@ -2,7 +2,7 @@
   "name": "ra-data-hal",
   "version": "1.1.0",
   "description": "A HAL data provider for react-admin.",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "lint": "standard --env mocha ",
     "lintFix": "standard --env mocha --fix",
