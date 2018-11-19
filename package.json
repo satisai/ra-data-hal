@@ -4,7 +4,7 @@
   "description": "A HAL data provider for react-admin.",
   "main": "lib/index.js",
   "scripts": {
-    "lint": "standard --env mocha ",
+    "lint": "standard --env mocha",
     "lintFix": "standard --env mocha --fix",
     "start": "babel -s inline -d lib -w src",
     "build": "babel -s inline -d lib src",
