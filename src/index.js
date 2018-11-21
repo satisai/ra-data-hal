@@ -1,6 +1,7 @@
 import {
   GET_LIST,
-  GET_ONE
+  GET_ONE,
+  CREATE
 } from 'react-admin'
 import {
   Navigator
@@ -70,6 +71,19 @@ export default (apiUrl) => {
       case GET_ONE: {
         const resourceResult = await
           discoveryResult.get(inflection.singularize(resourceName), params)
+        const resource = resourceResult.resource()
+        const data = {
+          ...resource.getProperties(),
+          links: resource.links
+        }
+
+        return { data }
+      }
+      case CREATE: {
+        const body = params.data || {}
+        delete params.data
+        const resourceResult = await
+          discoveryResult.post(resourceName, body, params)
         const resource = resourceResult.resource()
         const data = {
           ...resource.getProperties(),

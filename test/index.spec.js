@@ -5,7 +5,8 @@ import qs from 'qs'
 import { Resource } from 'halboy'
 import {
   GET_LIST,
-  GET_ONE
+  GET_ONE,
+  CREATE
 } from 'react-admin'
 
 import * as api from './support/api'
@@ -171,6 +172,62 @@ describe('react-admin HAL data provider', () => {
             tag: postResource.getProperty('tag'),
             links: {
               self: {href: postResource.getHref('self')}
+            }
+          }
+        })
+      })
+  })
+
+  describe('on CREATE', () => {
+    it('posts to resource based on discovery',
+      async () => {
+        const apiUrl = faker.internet.url()
+        const postId = faker.random.uuid()
+        const commentId = faker.random.uuid()
+
+        const commentResource = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${postId}/comments/${commentId}`
+          })
+          .addProperties({
+            id: commentId,
+            title: 'My Comment',
+            body: 'Best comment ever'
+          })
+
+        api.onDiscover(apiUrl, {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          },
+          postComments: {
+            href: `${apiUrl}/posts/{id}/comments`,
+            templated: true
+          }
+        })
+
+        const payload = {
+          title: 'My Comment',
+          body: 'Best comment ever'
+        }
+        api.onPost(apiUrl, `/posts/${postId}/comments`, payload, commentResource)
+
+        const dataProvider = halDataProvider(apiUrl)
+
+        const result = await dataProvider(CREATE, 'postComments',
+          {
+            id: postId,
+            data: payload
+          })
+
+        expect(result).to.eql({
+          data: {
+            id: commentResource.getProperty('id'),
+            title: commentResource.getProperty('title'),
+            body: commentResource.getProperty('body'),
+            links: {
+              self: {href: commentResource.getHref('self')}
             }
           }
         })

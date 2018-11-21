@@ -19,3 +19,14 @@ export const onGet = (url, path, resource, {headers} = {}) => {
     .get(path)
     .reply(200, resource.toObject())
 }
+
+export const onPost = (url, path, body, resource, {headers} = {}) => {
+  nock(url, {
+    reqHeaders: headers,
+    paramsSerializer: (params) => {
+      return qs.stringify(params, {arrayFormat: 'repeat'})
+    }
+  })
+    .post(path, body)
+    .reply(200, resource.toObject())
+}
