@@ -1,19 +1,18 @@
-import {
-  GET_LIST,
-  GET_ONE,
-  CREATE
-} from 'react-admin'
-import {
-  Navigator
-} from 'halboy'
+import { CREATE, GET_LIST, GET_ONE, GET_MANY_REFERENCE } from 'react-admin'
+import { reduce, toPairs, append, includes, last, split, path, assoc } from 'ramda'
+import { Navigator } from 'halboy'
 import inflection from 'inflection'
 import capitalize from 'capitalize'
-import { reduce, toPairs, append } from 'ramda'
 import qs from 'qs'
+
+const getId = (id) => id && includes(':', id)
+  ? last(split(':', id))
+  : id
 
 export default (apiUrl) => {
   /**
-   * Query a data provider and return a promise for a response
+   * Query a data provider and return a promise for a
+   * response
    *
    * @example
    * dataProvider(GET_ONE, 'posts', { id: 123 })
@@ -24,6 +23,7 @@ export default (apiUrl) => {
    * @param {Object} params Request parameters. Depends on the action type.
    * @returns {Promise} the Promise for a response.
    */
+
   return async (type, resourceName, params) => {
     const discoveryResult = await Navigator.discover(apiUrl)
 
@@ -55,7 +55,7 @@ export default (apiUrl) => {
         const resourceResult = await
           discoveryResult.get(resourceName, fullParams, {
             paramsSerializer: (params) => {
-              return qs.stringify(params, {arrayFormat: 'repeat'})
+              return qs.stringify(params, { arrayFormat: 'repeat' })
             }
           })
         const resource = resourceResult.resource()
@@ -63,35 +63,58 @@ export default (apiUrl) => {
         const data = resource.getResource(resourceName)
           .map(r => ({
             ...r.getProperties(),
-            links: r.links
+            links: r.links,
+            embedded: r.embedded
           }))
 
         return { data, total }
       }
+
       case GET_ONE: {
+        const query = { id: getId(params.id) }
         const resourceResult = await
-          discoveryResult.get(inflection.singularize(resourceName), params)
+          discoveryResult.get(inflection.singularize(resourceName), query)
         const resource = resourceResult.resource()
         const data = {
           ...resource.getProperties(),
-          links: resource.links
+          links: resource.links,
+          embedded: resource.embedded
         }
 
         return { data }
       }
+
       case CREATE: {
-        const body = params.data || {}
-        delete params.data
+        const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
         const resourceResult = await
-          discoveryResult.post(resourceName, body, params)
+          discoveryResult.post(resourceName, body, body)
         const resource = resourceResult.resource()
         const data = {
           ...resource.getProperties(),
-          links: resource.links
+          links: resource.links,
+          embedded: resource.embedded
         }
 
         return { data }
       }
+
+      case GET_MANY_REFERENCE: {
+        const query = {
+          [params.target]: params.id
+        }
+        const resourceResult = await
+          discoveryResult.get(resourceName, query)
+        const resource = resourceResult.resource()
+        const data = resource.getResource(resourceName)
+          .map(resource => ({
+            ...resource.getProperties(),
+            links: resource.links,
+            embedded: resource.embedded
+          }))
+
+        return { data, total: data.length }
+      }
+
       default:
         throw new Error(`Unsupported fetch action type ${type}`)
     }

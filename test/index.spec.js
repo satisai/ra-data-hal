@@ -6,7 +6,8 @@ import { Resource } from 'halboy'
 import {
   GET_LIST,
   GET_ONE,
-  CREATE
+  CREATE,
+  GET_MANY_REFERENCE
 } from 'react-admin'
 
 import * as api from './support/api'
@@ -111,7 +112,8 @@ describe('react-admin HAL data provider', () => {
             tag: post1Resource.getProperty('tag'),
             links: {
               self: {href: post1Resource.getHref('self')}
-            }
+            },
+            embedded: {}
           },
           {
             id: post2Resource.getProperty('id'),
@@ -121,7 +123,8 @@ describe('react-admin HAL data provider', () => {
             tag: post2Resource.getProperty('tag'),
             links: {
               self: {href: post2Resource.getHref('self')}
-            }
+            },
+            embedded: {}
           }
         ],
         total: 36
@@ -172,7 +175,8 @@ describe('react-admin HAL data provider', () => {
             tag: postResource.getProperty('tag'),
             links: {
               self: {href: postResource.getHref('self')}
-            }
+            },
+            embedded: {}
           }
         })
       })
@@ -208,6 +212,7 @@ describe('react-admin HAL data provider', () => {
         })
 
         const payload = {
+          id: postId,
           title: 'My Comment',
           body: 'Best comment ever'
         }
@@ -217,7 +222,6 @@ describe('react-admin HAL data provider', () => {
 
         const result = await dataProvider(CREATE, 'postComments',
           {
-            id: postId,
             data: payload
           })
 
@@ -228,8 +232,77 @@ describe('react-admin HAL data provider', () => {
             body: commentResource.getProperty('body'),
             links: {
               self: {href: commentResource.getHref('self')}
-            }
+            },
+            embedded: {}
           }
+        })
+      })
+  })
+
+  describe('on GET_MANY_REFERENCE', () => {
+    it('fetches many by reference',
+      async () => {
+        const apiUrl = faker.internet.url()
+        const postId = faker.random.uuid()
+        const target = 'post'
+
+        api.onDiscover(apiUrl, {
+          self: `${apiUrl}/`,
+          comments: {
+            href: `${apiUrl}/comments{?post}`,
+            templated: true
+          }
+        })
+
+        const commentId1 = faker.random.uuid()
+        const commentResource1 = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${postId}/comments/${commentId1}`
+          })
+          .addProperties({
+            id: commentId1,
+            title: 'My comment',
+            body: 'Best comment ever'
+          })
+
+        const commentId2 = faker.random.uuid()
+        const commentResource2 = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${postId}/comments/${commentId2}`
+          })
+          .addProperties({
+            id: commentId2,
+            title: 'My other comment',
+            body: 'Second best comment ever'
+          })
+
+        const commentsResource = new Resource()
+          .addResource('comments', [commentResource1, commentResource2])
+
+        api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource)
+
+        const dataProvider = halDataProvider(apiUrl)
+
+        const result = await dataProvider(GET_MANY_REFERENCE, 'comments', {
+          target,
+          id: postId
+        })
+
+        expect(result).to.eql({
+          data: [{
+            links: commentResource1.links,
+            embedded: {},
+            id: commentResource1.getProperty('id'),
+            title: commentResource1.getProperty('title'),
+            body: commentResource1.getProperty('body')
+          }, {
+            links: commentResource2.links,
+            embedded: {},
+            id: commentResource2.getProperty('id'),
+            title: commentResource2.getProperty('title'),
+            body: commentResource2.getProperty('body')
+          }],
+          total: 2
         })
       })
   })
