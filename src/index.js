@@ -1,5 +1,20 @@
-import { CREATE, GET_LIST, GET_ONE, GET_MANY_REFERENCE } from 'react-admin'
-import { reduce, toPairs, append, includes, last, split, path, assoc } from 'ramda'
+import {
+  CREATE,
+  GET_LIST,
+  GET_MANY,
+  GET_MANY_REFERENCE,
+  GET_ONE
+} from 'react-admin'
+import {
+  append,
+  assoc,
+  includes,
+  last,
+  path,
+  reduce,
+  split,
+  toPairs
+} from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
 import capitalize from 'capitalize'
@@ -8,6 +23,20 @@ import qs from 'qs'
 const getId = (id) => id && includes(':', id)
   ? last(split(':', id))
   : id
+
+const getSingleResource = async (navigator, resourceName, id) => {
+  const result = await navigator.get(
+    inflection.singularize(resourceName),
+    { id: id }
+  )
+
+  const resource = result.resource()
+  return {
+    ...resource.getProperties(),
+    links: resource.links,
+    embedded: resource.embedded
+  }
+}
 
 export default (apiUrl) => {
   /**
@@ -71,17 +100,12 @@ export default (apiUrl) => {
       }
 
       case GET_ONE: {
-        const query = { id: getId(params.id) }
-        const resourceResult = await
-          discoveryResult.get(inflection.singularize(resourceName), query)
-        const resource = resourceResult.resource()
-        const data = {
-          ...resource.getProperties(),
-          links: resource.links,
-          embedded: resource.embedded
+        return {
+          data: await getSingleResource(
+            discoveryResult,
+            resourceName,
+            getId(params.id))
         }
-
-        return { data }
       }
 
       case CREATE: {
@@ -96,6 +120,14 @@ export default (apiUrl) => {
         }
 
         return { data }
+      }
+
+      case GET_MANY: {
+        const ids = params.ids.map(getId)
+        const data = await Promise.all(ids.map(id =>
+          getSingleResource(discoveryResult, resourceName, id)))
+
+        return { data, total: data.length }
       }
 
       case GET_MANY_REFERENCE: {

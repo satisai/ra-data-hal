@@ -4,10 +4,11 @@ import nock from 'nock'
 import qs from 'qs'
 import { Resource } from 'halboy'
 import {
-  GET_LIST,
-  GET_ONE,
   CREATE,
-  GET_MANY_REFERENCE
+  GET_LIST,
+  GET_MANY,
+  GET_MANY_REFERENCE,
+  GET_ONE
 } from 'react-admin'
 
 import * as api from './support/api'
@@ -235,6 +236,76 @@ describe('react-admin HAL data provider', () => {
             },
             embedded: {}
           }
+        })
+      })
+  })
+
+  describe('on GET_MANY', () => {
+    it('fetches many',
+      async () => {
+        const apiUrl = faker.internet.url()
+
+        api.onDiscover(apiUrl, {
+          self: `${apiUrl}/`,
+          comment: {
+            href: `${apiUrl}/comments/{id}`,
+            templated: true
+          }
+        })
+
+        const commentId1 = faker.random.uuid()
+        const commentResource1 = new Resource()
+          .addLinks({
+            self: `${apiUrl}/comments/${commentId1}`
+          })
+          .addProperties({
+            id: commentId1,
+            title: 'My comment',
+            body: 'Best comment ever'
+          })
+
+        api.onGet(
+          apiUrl,
+          `/comments/${commentId1}`,
+          commentResource1)
+
+        const commentId2 = faker.random.uuid()
+        const commentResource2 = new Resource()
+          .addLinks({
+            self: `${apiUrl}/comments/${commentId2}`
+          })
+          .addProperties({
+            id: commentId2,
+            title: 'My other comment',
+            body: 'Second best comment ever'
+          })
+
+        api.onGet(
+          apiUrl,
+          `/comments/${commentId2}`,
+          commentResource2)
+
+        const dataProvider = halDataProvider(apiUrl)
+
+        const result = await dataProvider(GET_MANY, 'comments', {
+          ids: [commentId1, commentId2]
+        })
+
+        expect(result).to.eql({
+          data: [{
+            links: commentResource1.links,
+            embedded: {},
+            id: commentResource1.getProperty('id'),
+            title: commentResource1.getProperty('title'),
+            body: commentResource1.getProperty('body')
+          }, {
+            links: commentResource2.links,
+            embedded: {},
+            id: commentResource2.getProperty('id'),
+            title: commentResource2.getProperty('title'),
+            body: commentResource2.getProperty('body')
+          }],
+          total: 2
         })
       })
   })
