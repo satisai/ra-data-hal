@@ -20,7 +20,7 @@ export const onGet = (url, path, resource, {headers} = {}) => {
     .reply(200, resource.toObject())
 }
 
-export const onPost = (url, path, body, resource, {headers} = {}) => {
+export const onPost = (url, path, body, resource, status = 200, {headers} = {}) => {
   nock(url, {
     reqHeaders: headers,
     paramsSerializer: (params) => {
@@ -28,5 +28,5 @@ export const onPost = (url, path, body, resource, {headers} = {}) => {
     }
   })
     .post(path, body)
-    .reply(200, resource.toObject())
+    .reply(status, resource.toObject())
 }

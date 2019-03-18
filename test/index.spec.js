@@ -70,7 +70,7 @@ describe('react-admin HAL data provider', () => {
         ]
       }
       const expectedQueryString =
-          qs.stringify(expectedQueryParams, {arrayFormat: 'repeat'})
+          qs.stringify(expectedQueryParams, { arrayFormat: 'repeat' })
 
       api.onDiscover(apiUrl, {
         self: `${apiUrl}/`,
@@ -95,8 +95,8 @@ describe('react-admin HAL data provider', () => {
       const dataProvider = halDataProvider(apiUrl)
 
       const result = await dataProvider(GET_LIST, 'posts', {
-        pagination: {page, perPage},
-        sort: {field: sortField, order: sortOrder},
+        pagination: { page, perPage },
+        sort: { field: sortField, order: sortOrder },
         filter: {
           [filterField1]: filterValue1,
           [filterField2]: filterValue2
@@ -112,7 +112,7 @@ describe('react-admin HAL data provider', () => {
             active: post1Resource.getProperty('active'),
             tag: post1Resource.getProperty('tag'),
             links: {
-              self: {href: post1Resource.getHref('self')}
+              self: { href: post1Resource.getHref('self') }
             },
             embedded: {}
           },
@@ -123,7 +123,7 @@ describe('react-admin HAL data provider', () => {
             active: post2Resource.getProperty('active'),
             tag: post2Resource.getProperty('tag'),
             links: {
-              self: {href: post2Resource.getHref('self')}
+              self: { href: post2Resource.getHref('self') }
             },
             embedded: {}
           }
@@ -175,7 +175,7 @@ describe('react-admin HAL data provider', () => {
             active: postResource.getProperty('active'),
             tag: postResource.getProperty('tag'),
             links: {
-              self: {href: postResource.getHref('self')}
+              self: { href: postResource.getHref('self') }
             },
             embedded: {}
           }
@@ -232,10 +232,54 @@ describe('react-admin HAL data provider', () => {
             title: commentResource.getProperty('title'),
             body: commentResource.getProperty('body'),
             links: {
-              self: {href: commentResource.getHref('self')}
+              self: { href: commentResource.getHref('self') }
             },
             embedded: {}
           }
+        })
+      }),
+    it('throws exception when response does not have 2xx status',
+      async () => {
+        const apiUrl = faker.internet.url()
+        const postId = faker.random.uuid()
+        const commentId = faker.random.uuid()
+
+        const errorResource = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${postId}/comments/${commentId}`
+          })
+          .addProperties({
+            errorContext: { problem: 'Bad things happen too' }
+          })
+
+        api.onDiscover(apiUrl, {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          },
+          postComments: {
+            href: `${apiUrl}/posts/{id}/comments`,
+            templated: true
+          }
+        })
+
+        const payload = {
+          id: postId,
+          title: 'My Comment',
+          body: 'Best comment ever'
+        }
+        api.onPost(apiUrl, `/posts/${postId}/comments`, payload, errorResource, 422)
+
+        const dataProvider = halDataProvider(apiUrl)
+
+        await dataProvider(CREATE, 'postComments',
+          {
+            data: payload
+          }).catch(err => {
+          expect(() => {
+            throw err
+          }).to.throw('Bad things happen too')
         })
       })
   })

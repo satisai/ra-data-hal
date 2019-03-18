@@ -8,7 +8,6 @@ import {
 import {
   append,
   assoc,
-  includes,
   last,
   path,
   reduce,
@@ -20,7 +19,7 @@ import inflection from 'inflection'
 import capitalize from 'capitalize'
 import qs from 'qs'
 
-const getId = (id) => id && includes(':', id)
+const getId = (id) => id && id.includes(':')
   ? last(split(':', id))
   : id
 
@@ -113,6 +112,12 @@ export default (apiUrl) => {
         const resourceResult = await
           discoveryResult.post(resourceName, body, body)
         const resource = resourceResult.resource()
+        if (resourceResult.status() >= 400) {
+          const errorMessage = resource.getProperty('errorContext').problem ||
+            resource.getProperty('errorContext') ||
+            'Error has happened creating resource'
+          throw new Error(errorMessage)
+        }
         const data = {
           ...resource.getProperties(),
           links: resource.links,
