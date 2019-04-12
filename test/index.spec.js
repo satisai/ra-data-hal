@@ -8,7 +8,8 @@ import {
   GET_LIST,
   GET_MANY,
   GET_MANY_REFERENCE,
-  GET_ONE
+  GET_ONE,
+  UPDATE
 } from 'react-admin'
 
 import * as api from './support/api'
@@ -237,7 +238,8 @@ describe('react-admin HAL data provider', () => {
             embedded: {}
           }
         })
-      }),
+      })
+
     it('throws exception when response does not have 2xx status',
       async () => {
         const apiUrl = faker.internet.url()
@@ -418,6 +420,58 @@ describe('react-admin HAL data provider', () => {
             body: commentResource2.getProperty('body')
           }],
           total: 2
+        })
+      })
+  })
+
+  describe('on UPDATE', () => {
+    it('updates the resource based on discovery',
+      async () => {
+        const apiUrl = faker.internet.url()
+        const postId = faker.random.uuid()
+
+        const payload = {
+          id: postId,
+          title: 'My Comment',
+          body: 'Best comment ever'
+        }
+
+        const putResource = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${postId}`
+          })
+          .addProperties({
+            id: payload.id,
+            title: payload.title,
+            body: payload.body,
+          })
+
+        api.onDiscover(apiUrl, {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          }
+        })
+
+        api.onPut(apiUrl, `/posts/${postId}`, payload, putResource)
+
+        const dataProvider = halDataProvider(apiUrl)
+
+        const result = await dataProvider(UPDATE, 'posts', {
+          data: payload
+        })
+
+        expect(result).to.eql({
+          data: {
+            id: payload.id,
+            title: payload.title,
+            body: payload.body,
+            links: {
+              self: { href: putResource.getHref('self') }
+            },
+            embedded: {}
+          }
         })
       })
   })

@@ -3,7 +3,8 @@ import {
   GET_LIST,
   GET_MANY,
   GET_MANY_REFERENCE,
-  GET_ONE
+  GET_ONE,
+  UPDATE
 } from 'react-admin'
 import {
   append,
@@ -150,6 +151,26 @@ export default (apiUrl) => {
           }))
 
         return { data, total: data.length }
+      }
+
+      case UPDATE: {
+        const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
+        const resourceResult = await
+          discoveryResult.put(inflection.singularize(resourceName), body, body)
+        const resource = resourceResult.resource()
+        if (resourceResult.status() >= 400) {
+          const errorMessage = resource.getProperty('errorContext').problem ||
+            resource.getProperty('errorContext') ||
+            'Error has happened creating resource'
+          throw new Error(errorMessage)
+        }
+        const data = {
+          ...resource.getProperties(),
+          links: resource.links,
+          embedded: resource.embedded
+        }
+
+        return { data }
       }
 
       default:

@@ -30,3 +30,14 @@ export const onPost = (url, path, body, resource, status = 200, {headers} = {}) 
     .post(path, body)
     .reply(status, resource.toObject())
 }
+
+export const onPut = (url, path, body, resource, status = 200, {headers} = {}) => {
+  nock(url, {
+    reqHeaders: headers,
+    paramsSerializer: (params) => {
+      return qs.stringify(params, {arrayFormat: 'repeat'})
+    }
+  })
+    .put(path, body)
+    .reply(status, resource.toObject())
+}
