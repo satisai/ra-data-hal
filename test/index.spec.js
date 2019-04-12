@@ -443,7 +443,7 @@ describe('react-admin HAL data provider', () => {
           .addProperties({
             id: payload.id,
             title: payload.title,
-            body: payload.body,
+            body: payload.body
           })
 
         api.onDiscover(apiUrl, {
