@@ -7,18 +7,16 @@ import {
   UPDATE
 } from 'react-admin'
 import {
-  append,
   assoc,
   last,
   path,
-  reduce,
   split,
-  toPairs
 } from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
 import capitalize from 'capitalize'
 import qs from 'qs'
+import { buildReactAdminParams } from './query'
 
 const getId = (id) => id && id.includes(':')
   ? last(split(':', id))
@@ -58,34 +56,11 @@ export default (apiUrl) => {
 
     switch (type) {
       case GET_LIST: {
-        const {
-          pagination: { page, perPage },
-          sort: { field, order },
-          filter
-        } = params
-
-        const paginationParams = {
-          'page': page,
-          'perPage': perPage
-        }
-        const sortParams = {
-          'sort': JSON.stringify([field, order.toLowerCase()])
-        }
-        const filterParams = {
-          'filter': reduce((filters, [field, value]) => {
-            return append(JSON.stringify([field, value]), filters)
-          }, [], toPairs(filter))
-        }
-        const fullParams = {
-          ...paginationParams,
-          ...sortParams,
-          ...filterParams
-        }
+        const fullParams = buildReactAdminParams(params)
         const resourceResult = await
           discoveryResult.get(resourceName, fullParams, {
-            paramsSerializer: (params) => {
-              return qs.stringify(params, { arrayFormat: 'repeat' })
-            }
+            paramsSerializer: (params) =>
+              qs.stringify(params, { arrayFormat: 'repeat' })
           })
         const resource = resourceResult.resource()
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
@@ -137,11 +112,15 @@ export default (apiUrl) => {
       }
 
       case GET_MANY_REFERENCE: {
-        const query = {
-          [params.target]: params.id
-        }
         const resourceResult = await
-          discoveryResult.get(resourceName, query)
+          discoveryResult.get(resourceName, {
+            ...buildReactAdminParams(params),
+            [params.target]: params.id
+          }, {
+            paramsSerializer: (params) =>
+              qs.stringify(params, { arrayFormat: 'repeat' })
+          })
+
         const resource = resourceResult.resource()
         const data = resource.getResource(resourceName)
           .map(resource => ({
