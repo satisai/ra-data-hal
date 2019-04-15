@@ -357,69 +357,69 @@ describe('react-admin HAL data provider', () => {
 
   describe('on GET_MANY_REFERENCE', () => {
     it('fetches many by reference', async () => {
-        const apiUrl = faker.internet.url()
-        const postId = faker.random.uuid()
-        const target = 'post'
+      const apiUrl = faker.internet.url()
+      const postId = faker.random.uuid()
+      const target = 'post'
 
-        api.onDiscover(apiUrl, {
-          self: `${apiUrl}/`,
-          comments: {
-            href: `${apiUrl}/comments{?post}`,
-            templated: true
-          }
-        })
-
-        const firstCommentId = faker.random.uuid()
-        const firstCommentResource = new Resource()
-          .addLinks({
-            self: `${apiUrl}/posts/${postId}/comments/${firstCommentId}`
-          })
-          .addProperties({
-            id: firstCommentId,
-            title: 'My comment',
-            body: 'Best comment ever'
-          })
-
-        const secondCommentId = faker.random.uuid()
-        const secondCommentResource = new Resource()
-          .addLinks({
-            self: `${apiUrl}/posts/${postId}/comments/${secondCommentId}`
-          })
-          .addProperties({
-            id: secondCommentId,
-            title: 'My other comment',
-            body: 'Second best comment ever'
-          })
-
-        const commentsResource = new Resource()
-          .addResource('comments', [firstCommentResource, secondCommentResource])
-
-        api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource)
-
-        const dataProvider = halDataProvider(apiUrl)
-
-        const result = await dataProvider(GET_MANY_REFERENCE, 'comments', {
-          target,
-          id: postId,
-        })
-
-        expect(result).to.eql({
-          data: [{
-            links: firstCommentResource.links,
-            embedded: {},
-            id: firstCommentResource.getProperty('id'),
-            title: firstCommentResource.getProperty('title'),
-            body: firstCommentResource.getProperty('body')
-          }, {
-            links: secondCommentResource.links,
-            embedded: {},
-            id: secondCommentResource.getProperty('id'),
-            title: secondCommentResource.getProperty('title'),
-            body: secondCommentResource.getProperty('body')
-          }],
-          total: 2
-        })
+      api.onDiscover(apiUrl, {
+        self: `${apiUrl}/`,
+        comments: {
+          href: `${apiUrl}/comments{?post}`,
+          templated: true
+        }
       })
+
+      const firstCommentId = faker.random.uuid()
+      const firstCommentResource = new Resource()
+        .addLinks({
+          self: `${apiUrl}/posts/${postId}/comments/${firstCommentId}`
+        })
+        .addProperties({
+          id: firstCommentId,
+          title: 'My comment',
+          body: 'Best comment ever'
+        })
+
+      const secondCommentId = faker.random.uuid()
+      const secondCommentResource = new Resource()
+        .addLinks({
+          self: `${apiUrl}/posts/${postId}/comments/${secondCommentId}`
+        })
+        .addProperties({
+          id: secondCommentId,
+          title: 'My other comment',
+          body: 'Second best comment ever'
+        })
+
+      const commentsResource = new Resource()
+        .addResource('comments', [firstCommentResource, secondCommentResource])
+
+      api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource)
+
+      const dataProvider = halDataProvider(apiUrl)
+
+      const result = await dataProvider(GET_MANY_REFERENCE, 'comments', {
+        target,
+        id: postId
+      })
+
+      expect(result).to.eql({
+        data: [{
+          links: firstCommentResource.links,
+          embedded: {},
+          id: firstCommentResource.getProperty('id'),
+          title: firstCommentResource.getProperty('title'),
+          body: firstCommentResource.getProperty('body')
+        }, {
+          links: secondCommentResource.links,
+          embedded: {},
+          id: secondCommentResource.getProperty('id'),
+          title: secondCommentResource.getProperty('title'),
+          body: secondCommentResource.getProperty('body')
+        }],
+        total: 2
+      })
+    })
 
     it('allows filtering, sorting and pagination', async () => {
       const apiUrl = faker.internet.url()
@@ -475,7 +475,7 @@ describe('react-admin HAL data provider', () => {
           `["${filterField1}","${filterValue1}"]`,
           `["${filterField2}","${filterValue2}"]`
         ],
-        [target]: postId,
+        [target]: postId
       }
 
       const expectedQueryString =
@@ -516,7 +516,6 @@ describe('react-admin HAL data provider', () => {
         total: 2
       })
     })
-
   })
 
   describe('on UPDATE', () => {

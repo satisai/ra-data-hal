@@ -10,7 +10,7 @@ import {
   assoc,
   last,
   path,
-  split,
+  split
 } from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
