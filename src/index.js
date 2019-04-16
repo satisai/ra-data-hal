@@ -129,7 +129,9 @@ export default (apiUrl) => {
             embedded: resource.embedded
           }))
 
-        return { data, total: data.length }
+        const total = resource.getProperty(`total${capitalize(resourceName)}`)
+
+        return { data, total }
       }
 
       case UPDATE: {

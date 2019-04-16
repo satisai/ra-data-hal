@@ -391,8 +391,12 @@ describe('react-admin HAL data provider', () => {
           body: 'Second best comment ever'
         })
 
-      const commentsResource = new Resource()
-        .addResource('comments', [firstCommentResource, secondCommentResource])
+      const totalComments = faker.random.number()
+
+      const commentsResource =
+        new Resource()
+          .addResource('comments', [firstCommentResource, secondCommentResource])
+          .addProperty('totalComments', totalComments)
 
       api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource)
 
@@ -417,7 +421,7 @@ describe('react-admin HAL data provider', () => {
           title: secondCommentResource.getProperty('title'),
           body: secondCommentResource.getProperty('body')
         }],
-        total: 2
+        total: totalComments
       })
     })
 
@@ -464,8 +468,12 @@ describe('react-admin HAL data provider', () => {
           body: 'Second best comment ever'
         })
 
-      const commentsResource = new Resource()
-        .addResource('comments', [secondCommentResource, firstCommentResource])
+      const totalComments = faker.random.number()
+
+      const commentsResource =
+        new Resource()
+          .addResource('comments', [firstCommentResource, secondCommentResource])
+          .addProperty('totalComments', totalComments)
 
       const expectedQueryParams = {
         page,
@@ -501,19 +509,19 @@ describe('react-admin HAL data provider', () => {
 
       expect(result).to.eql({
         data: [{
-          links: secondCommentResource.links,
-          embedded: {},
-          id: secondCommentResource.getProperty('id'),
-          title: secondCommentResource.getProperty('title'),
-          body: secondCommentResource.getProperty('body')
-        }, {
           links: firstCommentResource.links,
           embedded: {},
           id: firstCommentResource.getProperty('id'),
           title: firstCommentResource.getProperty('title'),
           body: firstCommentResource.getProperty('body')
+        }, {
+          links: secondCommentResource.links,
+          embedded: {},
+          id: secondCommentResource.getProperty('id'),
+          title: secondCommentResource.getProperty('title'),
+          body: secondCommentResource.getProperty('body')
         }],
-        total: 2
+        total: totalComments
       })
     })
   })
