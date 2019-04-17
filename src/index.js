@@ -29,8 +29,9 @@ const navToResource = async (navigator, method = 'get', ...args) => {
   const resource = resourceResult.resource()
   const status = resourceResult.status()
   if (status >= 400) {
-    const errorMessage = resource.getProperty('errorContext').problem ||
-      resource.getProperty('errorContext') ||
+    const errorContext = resource.getProperty('errorContext')
+    const errorMessage = path(['problem'], errorContext) ||
+      errorContext ||
       'Error has happened creating resource'
     throw new HttpError(errorMessage, status)
   }
