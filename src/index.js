@@ -4,7 +4,8 @@ import {
   GET_MANY,
   GET_MANY_REFERENCE,
   GET_ONE,
-  UPDATE
+  UPDATE,
+  HttpError
 } from 'react-admin'
 import {
   assoc,
@@ -21,6 +22,21 @@ import { buildReactAdminParams } from './query'
 const getId = (id) => id && id.includes(':')
   ? last(split(':', id))
   : id
+
+const navToResource = async (navigator, method = 'get', ...args) => {
+  const resourceResult = await
+    navigator[method](...args)
+  const resource = resourceResult.resource()
+  const status = resourceResult.status()
+  if (status >= 400) {
+    const errorMessage = resource.getProperty('errorContext').problem ||
+      resource.getProperty('errorContext') ||
+      'Error has happened creating resource'
+    throw new HttpError(errorMessage, status)
+  }
+
+  return resource
+}
 
 const getSingleResource = async (navigator, resourceName, id) => {
   const result = await navigator.get(
@@ -57,12 +73,13 @@ export default (apiUrl) => {
     switch (type) {
       case GET_LIST: {
         const fullParams = buildReactAdminParams(params)
-        const resourceResult = await
-          discoveryResult.get(resourceName, fullParams, {
+        const resource = await navToResource(discoveryResult, 'get',
+          resourceName,
+          fullParams,
+          {
             paramsSerializer: (params) =>
               qs.stringify(params, { arrayFormat: 'repeat' })
           })
-        const resource = resourceResult.resource()
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
         const data = resource.getResource(resourceName)
           .map(r => ({
@@ -85,15 +102,8 @@ export default (apiUrl) => {
 
       case CREATE: {
         const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
-        const resourceResult = await
-          discoveryResult.post(resourceName, body, body)
-        const resource = resourceResult.resource()
-        if (resourceResult.status() >= 400) {
-          const errorMessage = resource.getProperty('errorContext').problem ||
-            resource.getProperty('errorContext') ||
-            'Error has happened creating resource'
-          throw new Error(errorMessage)
-        }
+        const resource = await navToResource(discoveryResult, 'post',
+          resourceName, body, body)
         const data = {
           ...resource.getProperties(),
           links: resource.links,
@@ -112,16 +122,14 @@ export default (apiUrl) => {
       }
 
       case GET_MANY_REFERENCE: {
-        const resourceResult = await
-          discoveryResult.get(resourceName, {
+        const resource = await navToResource(discoveryResult, 'get',
+          resourceName, {
             ...buildReactAdminParams(params),
             [params.target]: params.id
           }, {
             paramsSerializer: (params) =>
               qs.stringify(params, { arrayFormat: 'repeat' })
           })
-
-        const resource = resourceResult.resource()
         const data = resource.getResource(resourceName)
           .map(resource => ({
             ...resource.getProperties(),
@@ -136,15 +144,8 @@ export default (apiUrl) => {
 
       case UPDATE: {
         const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
-        const resourceResult = await
-          discoveryResult.put(inflection.singularize(resourceName), body, body)
-        const resource = resourceResult.resource()
-        if (resourceResult.status() >= 400) {
-          const errorMessage = resource.getProperty('errorContext').problem ||
-            resource.getProperty('errorContext') ||
-            'Error has happened creating resource'
-          throw new Error(errorMessage)
-        }
+        const resource = await navToResource(discoveryResult, 'put',
+          inflection.singularize(resourceName), body, body)
         const data = {
           ...resource.getProperties(),
           links: resource.links,
