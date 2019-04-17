@@ -1,6 +1,6 @@
 {
   "name": "ra-data-hal",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "A HAL data provider for react-admin.",
   "main": "lib/index.js",
   "scripts": {
