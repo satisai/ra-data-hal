@@ -39,12 +39,11 @@ const navToResource = async (navigator, method = 'get', ...args) => {
 }
 
 const getSingleResource = async (navigator, resourceName, id) => {
-  const result = await navigator.get(
+  const resource = await navToResource(navigator, 'get',
     inflection.singularize(resourceName),
     { id: id }
   )
 
-  const resource = result.resource()
   return {
     ...resource.getProperties(),
     links: resource.links,
