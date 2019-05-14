@@ -9,33 +9,33 @@ export const onDiscover = (url, links) =>
         .addLinks(links)
         .toObject())
 
-export const onGet = (url, path, resource, {headers} = {}) => {
+export const onGet = (url, path, resource, { headers } = {}) => {
   nock(url, {
     reqHeaders: headers,
     paramsSerializer: (params) => {
-      return qs.stringify(params, {arrayFormat: 'repeat'})
+      return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
     .get(path)
     .reply(200, resource.toObject())
 }
 
-export const onPost = (url, path, body, resource, status = 200, {headers} = {}) => {
+export const onPost = (url, path, body, resource, status = 200, { headers } = {}) => {
   nock(url, {
     reqHeaders: headers,
     paramsSerializer: (params) => {
-      return qs.stringify(params, {arrayFormat: 'repeat'})
+      return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
     .post(path, body)
     .reply(status, resource.toObject())
 }
 
-export const onPut = (url, path, body, resource, status = 200, {headers} = {}) => {
+export const onPut = (url, path, body, resource, status = 200, { headers } = {}) => {
   nock(url, {
     reqHeaders: headers,
     paramsSerializer: (params) => {
-      return qs.stringify(params, {arrayFormat: 'repeat'})
+      return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
     .put(path, body)

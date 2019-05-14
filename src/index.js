@@ -25,7 +25,7 @@ const getId = (id) => id && id.includes(':')
 
 const navToResource = async (navigator, method = 'get', ...args) => {
   const resourceResult = await
-    navigator[method](...args)
+  navigator[method](...args)
   const resource = resourceResult.resource()
   const status = resourceResult.status()
   if (status >= 400) {
