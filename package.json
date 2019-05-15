@@ -34,7 +34,6 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "capitalize": "^2.0.0",
     "halboy": "^0.8.6",
     "inflection": "^1.12.0",
     "qs": "^6.7.0",

@@ -10,9 +10,11 @@ import {
 import { assoc, last, path, split } from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
-import capitalize from 'capitalize'
 import qs from 'qs'
 import { buildReactAdminParams } from './query'
+
+const capitalizeFirstLetter = string =>
+  string.charAt(0).toUpperCase() + string.slice(1)
 
 const log = (request, result) => {
   const { type, resourceName, params } = request
@@ -56,7 +58,7 @@ const getSingleResource = async (navigator, resourceName, id) => {
   return resource.toObject()
 }
 
-const handleRequest = async (apiUrl, type, resourceName, params, options) => {
+const handleRequest = async (apiUrl, type, resourceName, params) => {
   const discoveryResult = await Navigator.discover(apiUrl)
 
   switch (type) {
@@ -72,12 +74,9 @@ const handleRequest = async (apiUrl, type, resourceName, params, options) => {
             qs.stringify(params, { arrayFormat: 'repeat' })
         }
       )
-      const totalProperty = `total${capitalize(resourceName)}`
-
-      options.debug && console.log(totalProperty)
-      options.debug && console.log(resource)
-
-      const total = resource.getProperty(totalProperty)
+      const total = resource.getProperty(
+        `total${capitalizeFirstLetter(resourceName)}`
+      )
       const data = resource.getResource(resourceName).map(r => r.toObject())
 
       return { data, total }
@@ -135,7 +134,9 @@ const handleRequest = async (apiUrl, type, resourceName, params, options) => {
         .getResource(resourceName)
         .map(resource => resource.toObject())
 
-      const total = resource.getProperty(`total${capitalize(resourceName)}`)
+      const total = resource.getProperty(
+        `total${capitalizeFirstLetter(resourceName)}`
+      )
 
       return { data, total }
     }
@@ -164,9 +165,7 @@ export default (apiUrl, { debug = false } = {}) => {
     let response
 
     try {
-      response = await handleRequest(apiUrl, type, resourceName, params, {
-        debug
-      })
+      response = await handleRequest(apiUrl, type, resourceName, params)
     } catch (error) {
       debug && log({ type, resourceName, params }, error)
       throw error
