@@ -3,16 +3,14 @@ import { Resource } from 'halboy'
 import qs from 'qs'
 
 export const onDiscover = (url, links) =>
-  nock(url).get('/')
-    .reply(200,
-      new Resource()
-        .addLinks(links)
-        .toObject())
+  nock(url)
+    .get('/')
+    .reply(200, new Resource().addLinks(links).toObject())
 
 export const onGet = (url, path, resource, { headers } = {}) => {
   nock(url, {
     reqHeaders: headers,
-    paramsSerializer: (params) => {
+    paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
@@ -20,10 +18,17 @@ export const onGet = (url, path, resource, { headers } = {}) => {
     .reply(200, resource.toObject())
 }
 
-export const onPost = (url, path, body, resource, status = 200, { headers } = {}) => {
+export const onPost = (
+  url,
+  path,
+  body,
+  resource,
+  status = 200,
+  { headers } = {}
+) => {
   nock(url, {
     reqHeaders: headers,
-    paramsSerializer: (params) => {
+    paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
@@ -31,10 +36,17 @@ export const onPost = (url, path, body, resource, status = 200, { headers } = {}
     .reply(status, resource.toObject())
 }
 
-export const onPut = (url, path, body, resource, status = 200, { headers } = {}) => {
+export const onPut = (
+  url,
+  path,
+  body,
+  resource,
+  status = 200,
+  { headers } = {}
+) => {
   nock(url, {
     reqHeaders: headers,
-    paramsSerializer: (params) => {
+    paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })

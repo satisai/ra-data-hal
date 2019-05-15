@@ -1,0 +1,31 @@
+{
+  "extends": ["standard", "prettier"],
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "env": {
+    "mocha": true
+  },
+  "globals": {
+    "fetch": true,
+    "before": true,
+    "beforeEach": true,
+    "after": true,
+    "afterEach": true,
+    "describe": true,
+    "context": true,
+    "xit": true,
+    "it": true
+  },
+  "plugins": [
+    "mocha"
+  ],
+  "rules": {
+    "mocha/no-exclusive-tests": "error",
+    "import/prefer-default-export": 0,
+    "import/no-named-as-default": 0,
+    "no-console": 0,
+    "no-underscore-dangle": 0
+  }
+}

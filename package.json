@@ -4,11 +4,14 @@
   "description": "A HAL data provider for react-admin.",
   "main": "lib/index.js",
   "scripts": {
-    "lint": "standard --env mocha",
-    "lintFix": "standard --env mocha --fix",
+    "lint": "eslint -c .eslintrc src test --ext .js",
+    "lintFix": "eslint -c .eslintrc src test --ext .js --fix",
+    "format": "prettier --check 'src/**/*.js' 'test/**/*.js'",
+    "formatFix": "prettier --write 'src/**/*.js' 'test/**/*.js'",
     "start": "babel -s inline -d lib -w src",
     "build": "babel -s inline -d lib src",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "precommit": "npm run formatFix && npm run lintFix && npm run test && npm run build",
+    "prepublishOnly": "npm run format && npm run lint && npm run test && npm run build",
     "test": "mocha --require babel-polyfill --require babel-core/register --recursive ./test"
   },
   "repository": {
@@ -42,13 +45,22 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
+    "babel-eslint": "^10.0.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.1",
+    "eslint-plugin-mocha": "^5.3.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
     "faker": "^4.1.0",
     "mocha": "^6.1.4",
     "nock": "^11.0.0-beta.14",
-    "standard": "^12.0.1"
+    "prettier": "1.17.0"
   }
 }
