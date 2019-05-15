@@ -1,18 +1,7 @@
 import {
-  CREATE,
-  GET_LIST,
-  GET_MANY,
-  GET_MANY_REFERENCE,
-  GET_ONE,
-  UPDATE,
-  HttpError
+  CREATE, GET_LIST, GET_MANY, GET_MANY_REFERENCE, GET_ONE, HttpError, UPDATE
 } from 'react-admin'
-import {
-  assoc,
-  last,
-  path,
-  split
-} from 'ramda'
+import { assoc, last, path, split } from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
 import capitalize from 'capitalize'
@@ -24,8 +13,7 @@ const getId = (id) => id && id.includes(':')
   : id
 
 const navToResource = async (navigator, method = 'get', ...args) => {
-  const resourceResult = await
-  navigator[method](...args)
+  const resourceResult = await navigator[method](...args)
   const resource = resourceResult.resource()
   const status = resourceResult.status()
   if (status >= 400) {
@@ -45,11 +33,7 @@ const getSingleResource = async (navigator, resourceName, id) => {
     { id: id }
   )
 
-  return {
-    ...resource.getProperties(),
-    links: resource.links,
-    embedded: resource.embedded
-  }
+  return resource.toObject()
 }
 
 export default (apiUrl) => {
@@ -81,12 +65,7 @@ export default (apiUrl) => {
               qs.stringify(params, { arrayFormat: 'repeat' })
           })
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
-        const data = resource.getResource(resourceName)
-          .map(r => ({
-            ...r.getProperties(),
-            links: r.links,
-            embedded: r.embedded
-          }))
+        const data = resource.getResource(resourceName).map(r => r.toObject())
 
         return { data, total }
       }
@@ -104,19 +83,17 @@ export default (apiUrl) => {
         const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
         const resource = await navToResource(discoveryResult, 'post',
           resourceName, body, body)
-        const data = {
-          ...resource.getProperties(),
-          links: resource.links,
-          embedded: resource.embedded
-        }
+        const data = resource.toObject()
 
         return { data }
       }
 
       case GET_MANY: {
         const ids = params.ids.map(getId)
+
         const data = await Promise.all(ids.map(id =>
-          getSingleResource(discoveryResult, resourceName, id)))
+          getSingleResource(discoveryResult, resourceName, id)
+        ))
 
         return { data, total: data.length }
       }
@@ -131,11 +108,7 @@ export default (apiUrl) => {
               qs.stringify(params, { arrayFormat: 'repeat' })
           })
         const data = resource.getResource(resourceName)
-          .map(resource => ({
-            ...resource.getProperties(),
-            links: resource.links,
-            embedded: resource.embedded
-          }))
+          .map(resource => resource.toObject())
 
         const total = resource.getProperty(`total${capitalize(resourceName)}`)
 
@@ -146,11 +119,7 @@ export default (apiUrl) => {
         const body = assoc('id', getId(path(['data', 'id'], params)), params.data)
         const resource = await navToResource(discoveryResult, 'put',
           inflection.singularize(resourceName), body, body)
-        const data = {
-          ...resource.getProperties(),
-          links: resource.links,
-          embedded: resource.embedded
-        }
+        const data = resource.toObject()
 
         return { data }
       }
