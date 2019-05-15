@@ -14,15 +14,16 @@ import capitalize from 'capitalize'
 import qs from 'qs'
 import { buildReactAdminParams } from './query'
 
-const log = (type, resourceName, params, response) => {
+const log = (request, result) => {
+  const { type, resourceName, params } = request
+
   if (console.group) {
-    // Better logging in Chrome
     console.groupCollapsed(type, resourceName, JSON.stringify(params))
-    console.log(response)
+    console.log(result)
     console.groupEnd()
   } else {
-    console.log('RADataHAL request ', type, resourceName, params)
-    console.log('RADataHAL response', response)
+    console.log('RADataHAL query ', type, resourceName, params)
+    console.log('RADataHAL result', result)
   }
 }
 
@@ -153,17 +154,18 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
   }
 }
 
-export default (apiUrl, loggingEnabled = false) => {
+export default (apiUrl, { debug = false } = {}) => {
   return async (type, resourceName, params) => {
     let response
 
     try {
-      response = handleRequest(apiUrl, type, resourceName, params)
-    } finally {
-      if (loggingEnabled) {
-        log(type, resourceName, params, response)
-      }
+      response = await handleRequest(apiUrl, type, resourceName, params)
+    } catch (error) {
+      debug && log({ type, resourceName, params }, error)
+      throw error
     }
+
+    debug && log({ type, resourceName, params }, response)
 
     return response
   }
