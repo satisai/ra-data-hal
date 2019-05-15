@@ -56,7 +56,7 @@ const getSingleResource = async (navigator, resourceName, id) => {
   return resource.toObject()
 }
 
-const handleRequest = async (apiUrl, type, resourceName, params) => {
+const handleRequest = async (apiUrl, type, resourceName, params, options) => {
   const discoveryResult = await Navigator.discover(apiUrl)
 
   switch (type) {
@@ -72,7 +72,12 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
             qs.stringify(params, { arrayFormat: 'repeat' })
         }
       )
-      const total = resource.getProperty(`total${capitalize(resourceName)}`)
+      const totalProperty = `total${capitalize(resourceName)}`
+
+      options.debug && console.log(totalProperty)
+      options.debug && console.log(resource)
+
+      const total = resource.getProperty(totalProperty)
       const data = resource.getResource(resourceName).map(r => r.toObject())
 
       return { data, total }
@@ -159,7 +164,9 @@ export default (apiUrl, { debug = false } = {}) => {
     let response
 
     try {
-      response = await handleRequest(apiUrl, type, resourceName, params)
+      response = await handleRequest(apiUrl, type, resourceName, params, {
+        debug
+      })
     } catch (error) {
       debug && log({ type, resourceName, params }, error)
       throw error
