@@ -4,8 +4,9 @@ import {
   GET_MANY,
   GET_MANY_REFERENCE,
   GET_ONE,
-  HttpError,
-  UPDATE
+  UPDATE,
+  DELETE,
+  HttpError
 } from 'react-admin'
 import { assoc, last, path, split } from 'ramda'
 import { Navigator } from 'halboy'
@@ -31,11 +32,12 @@ const log = (request, result) => {
 
 const getId = id => (id && id.includes(':') ? last(split(':', id)) : id)
 
-const navToResource = async (navigator, method = 'get', ...args) => {
+const navToResult = async (navigator, method = 'get', ...args) => {
   const resourceResult = await navigator[method](...args)
-  const resource = resourceResult.resource()
+
   const status = resourceResult.status()
   if (status >= 400) {
+    const resource = resourceResult.resource()
     const errorContext = resource.getProperty('errorContext')
     const errorMessage =
       path(['problem'], errorContext) ||
@@ -44,18 +46,21 @@ const navToResource = async (navigator, method = 'get', ...args) => {
     throw new HttpError(errorMessage, status)
   }
 
-  return resource
+  return resourceResult
+}
+
+const getSingleResult = async (navigator, resourceName, id) => {
+  return navToResult(navigator, 'get', inflection.singularize(resourceName), {
+    id: id
+  })
+}
+
+const navToResource = async (navigator, method = 'get', ...args) => {
+  return (await navToResult(navigator, method, ...args)).resource()
 }
 
 const getSingleResource = async (navigator, resourceName, id) => {
-  const resource = await navToResource(
-    navigator,
-    'get',
-    inflection.singularize(resourceName),
-    { id: id }
-  )
-
-  return resource.toObject()
+  return (await getSingleResult(navigator, resourceName, id)).resource()
 }
 
 const handleRequest = async (apiUrl, type, resourceName, params) => {
@@ -84,11 +89,11 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
 
     case GET_ONE: {
       return {
-        data: await getSingleResource(
+        data: (await getSingleResource(
           discoveryResult,
           resourceName,
           getId(params.id)
-        )
+        )).toObject()
       }
     }
 
@@ -110,7 +115,13 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
       const ids = params.ids.map(getId)
 
       const data = await Promise.all(
-        ids.map(id => getSingleResource(discoveryResult, resourceName, id))
+        ids.map(async id =>
+          (await getSingleResource(
+            discoveryResult,
+            resourceName,
+            id
+          )).toObject()
+        )
       )
 
       return { data, total: data.length }
@@ -153,6 +164,19 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
       const data = resource.toObject()
 
       return { data }
+    }
+
+    case DELETE: {
+      const getResult = await getSingleResult(
+        discoveryResult,
+        inflection.singularize(resourceName),
+        getId(params.id)
+      )
+      const data = getResult.resource().toObject()
+
+      await getResult.delete('self')
+
+      return { data: data }
     }
 
     default:

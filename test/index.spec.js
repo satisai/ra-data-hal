@@ -9,7 +9,8 @@ import {
   GET_MANY,
   GET_MANY_REFERENCE,
   GET_ONE,
-  UPDATE
+  UPDATE,
+  DELETE
 } from 'react-admin'
 
 import * as api from './support/api'
@@ -613,6 +614,60 @@ describe('react-admin HAL data provider', () => {
           _links: {
             self: { href: putResource.getHref('self') }
           }
+        }
+      })
+    })
+  })
+
+  describe('on DELETE', () => {
+    it('deletes the resource based on discovery', async () => {
+      const apiUrl = faker.internet.url()
+      const postId = faker.random.uuid()
+
+      const post = {
+        id: postId,
+        title: 'My Comment',
+        body: 'Best comment ever'
+      }
+
+      const postResource = new Resource()
+        .addLinks({
+          self: {
+            href: `/posts/${postId}`
+          }
+        })
+        .addProperties({
+          id: post.id,
+          title: post.title,
+          body: post.body
+        })
+
+      api.onDiscover(apiUrl, {
+        self: `${apiUrl}/`,
+        post: {
+          href: `${apiUrl}/posts/{id}`,
+          templated: true
+        }
+      })
+
+      api.onGet(apiUrl, `/posts/${postId}`, postResource)
+      api.onDelete(apiUrl, `/posts/${postId}`, 204)
+
+      const dataProvider = halDataProvider(apiUrl)
+
+      const result = await dataProvider(DELETE, 'posts', {
+        id: postId,
+        previousData: postResource.toObject()
+      })
+
+      expect(result).to.eql({
+        data: {
+          _links: {
+            self: { href: postResource.getHref('self') }
+          },
+          id: postId,
+          title: post.title,
+          body: post.body
         }
       })
     })

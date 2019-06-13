@@ -53,3 +53,14 @@ export const onPut = (
     .put(path, body)
     .reply(status, resource.toObject())
 }
+
+export const onDelete = (url, path, status = 200, { headers } = {}) => {
+  nock(url, {
+    reqHeaders: headers,
+    paramsSerializer: params => {
+      return qs.stringify(params, { arrayFormat: 'repeat' })
+    }
+  })
+    .delete(path)
+    .reply(status)
+}
