@@ -12,9 +12,15 @@ import {
   UPDATE,
   DELETE
 } from 'react-admin'
+import axios from 'axios'
 
 import * as api from './support/api'
 import halDataProvider from '../src'
+
+axios.interceptors.request.use(request => {
+  // console.log('Starting Request', request)
+  return request
+})
 
 describe('react-admin HAL data provider', () => {
   beforeEach(() => {
@@ -79,13 +85,22 @@ describe('react-admin HAL data provider', () => {
           arrayFormat: 'repeat'
         })
 
-        api.onDiscover(apiUrl, {
-          self: `${apiUrl}/`,
-          posts: {
-            href: `${apiUrl}/posts{?page,perPage,sort*,filter*}`,
-            templated: true
+        api.onDiscover(
+          apiUrl,
+          {
+            self: `${apiUrl}/`,
+            posts: {
+              href: `${apiUrl}/posts{?page,perPage,sort*,filter*}`,
+              templated: true
+            }
+          },
+          {
+            headers: {
+              header1: val => val === 'value',
+              header2: val => val === 'value2'
+            }
           }
-        })
+        )
 
         api.onGet(
           apiUrl,
@@ -98,7 +113,141 @@ describe('react-admin HAL data provider', () => {
             })
             .addProperty('totalPosts', 36)
             .addResource('posts', post1Resource)
-            .addResource('posts', post2Resource)
+            .addResource('posts', post2Resource),
+          {
+            headers: {
+              header1: val => val === 'value',
+              header2: val => val === 'value2'
+            }
+          }
+        )
+
+        const dataProvider = halDataProvider(apiUrl, {
+          headers: {
+            header1: 'value',
+            header2: () => 'value2'
+          }
+        })
+
+        const result = await dataProvider(GET_LIST, 'posts', {
+          pagination: { page, perPage },
+          sort: { field: sortField, order: sortOrder },
+          filter: {
+            [filterField1]: filterValue1,
+            [filterField2]: filterValue2
+          }
+        })
+
+        expect(result).to.eql({
+          data: [
+            {
+              id: post1Resource.getProperty('id'),
+              title: post1Resource.getProperty('title'),
+              author: post1Resource.getProperty('author'),
+              active: post1Resource.getProperty('active'),
+              tag: post1Resource.getProperty('tag'),
+              _links: {
+                self: { href: post1Resource.getHref('self') }
+              }
+            },
+            {
+              id: post2Resource.getProperty('id'),
+              title: post2Resource.getProperty('title'),
+              author: post2Resource.getProperty('author'),
+              active: post2Resource.getProperty('active'),
+              tag: post2Resource.getProperty('tag'),
+              _links: {
+                self: { href: post2Resource.getHref('self') }
+              }
+            }
+          ],
+          total: 36
+        })
+      }
+    )
+
+    it(
+      'fetches the resource based on discovery with pagination, sort ' +
+        'and filter query parameters without headers',
+      async () => {
+        const apiUrl = faker.internet.url()
+        const page = 3
+        const perPage = 2
+        const sortField = 'title'
+        const sortOrder = 'asc'
+        const filterField1 = 'active'
+        const filterValue1 = 'true'
+        const filterField2 = 'tag'
+        const filterValue2 = 'article'
+
+        const post1Id = faker.random.uuid()
+        const post1Resource = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${post1Id}`
+          })
+          .addProperties({
+            id: post1Id,
+            title: 'My first post',
+            author: 'Jenny',
+            active: true,
+            tag: 'article'
+          })
+
+        const post2Id = faker.random.uuid()
+        const post2Resource = new Resource()
+          .addLinks({
+            self: `${apiUrl}/posts/${post2Id}`
+          })
+          .addProperties({
+            id: post2Id,
+            title: 'My second post',
+            author: 'James',
+            active: true,
+            tag: 'article'
+          })
+
+        const expectedQueryParams = {
+          page,
+          perPage,
+          sort: `["${sortField}","${sortOrder}"]`,
+          filter: [
+            `["${filterField1}","${filterValue1}"]`,
+            `["${filterField2}","${filterValue2}"]`
+          ]
+        }
+        const expectedQueryString = qs.stringify(expectedQueryParams, {
+          arrayFormat: 'repeat'
+        })
+
+        api.onDiscover(
+          apiUrl,
+          {
+            self: `${apiUrl}/`,
+            posts: {
+              href: `${apiUrl}/posts{?page,perPage,sort*,filter*}`,
+              templated: true
+            }
+          },
+          {
+            badheaders: ['header1', 'header2']
+          }
+        )
+
+        api.onGet(
+          apiUrl,
+          `/posts?${expectedQueryString}`,
+          new Resource()
+            .addLinks({
+              self: {
+                href: `/posts`
+              }
+            })
+            .addProperty('totalPosts', 36)
+            .addResource('posts', post1Resource)
+            .addResource('posts', post2Resource),
+          {
+            badheaders: ['header1', 'header2']
+          }
         )
 
         const dataProvider = halDataProvider(apiUrl)
@@ -158,17 +307,36 @@ describe('react-admin HAL data provider', () => {
           tag: 'article'
         })
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        post: {
-          href: `${apiUrl}/posts/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
+        }
+      )
+
+      api.onGet(apiUrl, `/posts/${postId}`, postResource, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
         }
       })
 
-      api.onGet(apiUrl, `/posts/${postId}`, postResource)
-
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(GET_ONE, 'posts', {
         id: postId
@@ -205,26 +373,52 @@ describe('react-admin HAL data provider', () => {
           body: 'Best comment ever'
         })
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        post: {
-          href: `${apiUrl}/posts/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          },
+          postComments: {
+            href: `${apiUrl}/posts/{id}/comments`,
+            templated: true
+          }
         },
-        postComments: {
-          href: `${apiUrl}/posts/{id}/comments`,
-          templated: true
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const payload = {
         id: postId,
         title: 'My Comment',
         body: 'Best comment ever'
       }
-      api.onPost(apiUrl, `/posts/${postId}/comments`, payload, commentResource)
+      api.onPost(
+        apiUrl,
+        `/posts/${postId}/comments`,
+        payload,
+        commentResource,
+        200,
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
+        }
+      )
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(CREATE, 'postComments', {
         data: payload
@@ -255,17 +449,26 @@ describe('react-admin HAL data provider', () => {
           errorContext: { problem: 'Bad things happen too' }
         })
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        post: {
-          href: `${apiUrl}/posts/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          },
+          postComments: {
+            href: `${apiUrl}/posts/{id}/comments`,
+            templated: true
+          }
         },
-        postComments: {
-          href: `${apiUrl}/posts/{id}/comments`,
-          templated: true
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const payload = {
         id: postId,
@@ -277,10 +480,21 @@ describe('react-admin HAL data provider', () => {
         `/posts/${postId}/comments`,
         payload,
         errorResource,
-        422
+        422,
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
+        }
       )
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       await dataProvider(CREATE, 'postComments', {
         data: payload
@@ -296,13 +510,22 @@ describe('react-admin HAL data provider', () => {
     it('fetches one', async () => {
       const apiUrl = faker.internet.url()
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        comment: {
-          href: `${apiUrl}/comments/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          comment: {
+            href: `${apiUrl}/comments/{id}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const commentId1 = faker.random.uuid()
       const commentResource1 = new Resource()
@@ -315,9 +538,19 @@ describe('react-admin HAL data provider', () => {
           body: 'Best comment ever'
         })
 
-      api.onGet(apiUrl, `/comments/${commentId1}`, commentResource1)
+      api.onGet(apiUrl, `/comments/${commentId1}`, commentResource1, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
+        }
+      })
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(GET_MANY, 'comments', {
         ids: [commentId1]
@@ -340,13 +573,22 @@ describe('react-admin HAL data provider', () => {
     xit('fetches many', async () => {
       const apiUrl = faker.internet.url()
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        comment: {
-          href: `${apiUrl}/comments/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          comment: {
+            href: `${apiUrl}/comments/{id}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const commentId1 = faker.random.uuid()
       const commentResource1 = new Resource()
@@ -359,7 +601,12 @@ describe('react-admin HAL data provider', () => {
           body: 'Best comment ever'
         })
 
-      api.onGet(apiUrl, `/comments/${commentId1}`, commentResource1)
+      api.onGet(apiUrl, `/comments/${commentId1}`, commentResource1, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
+        }
+      })
 
       const commentId2 = faker.random.uuid()
       const commentResource2 = new Resource()
@@ -374,7 +621,12 @@ describe('react-admin HAL data provider', () => {
 
       api.onGet(apiUrl, `/comments/${commentId2}`, commentResource2)
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(GET_MANY, 'comments', {
         ids: [commentId1, commentId2]
@@ -406,13 +658,22 @@ describe('react-admin HAL data provider', () => {
       const postId = faker.random.uuid()
       const target = 'post'
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        comments: {
-          href: `${apiUrl}/comments{?post}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          comments: {
+            href: `${apiUrl}/comments{?post}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const firstCommentId = faker.random.uuid()
       const firstCommentResource = new Resource()
@@ -442,9 +703,19 @@ describe('react-admin HAL data provider', () => {
         .addResource('comments', [firstCommentResource, secondCommentResource])
         .addProperty('totalComments', totalComments)
 
-      api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource)
+      api.onGet(apiUrl, `/comments?${target}=${postId}`, commentsResource, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
+        }
+      })
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(GET_MANY_REFERENCE, 'comments', {
         target,
@@ -483,13 +754,22 @@ describe('react-admin HAL data provider', () => {
       const filterField2 = 'body'
       const filterValue2 = 'filter'
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        comments: {
-          href: `${apiUrl}/comments{?post}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          comments: {
+            href: `${apiUrl}/comments{?post}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
         }
-      })
+      )
 
       const firstCommentId = faker.random.uuid()
       const firstCommentResource = new Resource()
@@ -534,9 +814,19 @@ describe('react-admin HAL data provider', () => {
         arrayFormat: 'repeat'
       })
 
-      api.onGet(apiUrl, `/comments?${expectedQueryString}`, commentsResource)
+      api.onGet(apiUrl, `/comments?${expectedQueryString}`, commentsResource, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
+        }
+      })
 
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(GET_MANY_REFERENCE, 'comments', {
         target,
@@ -590,17 +880,36 @@ describe('react-admin HAL data provider', () => {
           body: payload.body
         })
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        post: {
-          href: `${apiUrl}/posts/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
+        }
+      )
+
+      api.onPut(apiUrl, `/posts/${postId}`, payload, putResource, 200, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
         }
       })
 
-      api.onPut(apiUrl, `/posts/${postId}`, payload, putResource)
-
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(UPDATE, 'posts', {
         data: payload
@@ -642,22 +951,47 @@ describe('react-admin HAL data provider', () => {
           body: post.body
         })
 
-      api.onDiscover(apiUrl, {
-        self: `${apiUrl}/`,
-        post: {
-          href: `${apiUrl}/posts/{id}`,
-          templated: true
+      api.onDiscover(
+        apiUrl,
+        {
+          self: `${apiUrl}/`,
+          post: {
+            href: `${apiUrl}/posts/{id}`,
+            templated: true
+          }
+        },
+        {
+          headers: {
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
+          }
+        }
+      )
+
+      api.onGet(apiUrl, `/posts/${postId}`, postResource, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
+        }
+      })
+      api.onDelete(apiUrl, `/posts/${postId}`, 204, {
+        headers: {
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
         }
       })
 
-      api.onGet(apiUrl, `/posts/${postId}`, postResource)
-      api.onDelete(apiUrl, `/posts/${postId}`, 204)
-
-      const dataProvider = halDataProvider(apiUrl)
+      const dataProvider = halDataProvider(apiUrl, {
+        headers: {
+          header1: 'value',
+          header2: () => 'value2'
+        }
+      })
 
       const result = await dataProvider(DELETE, 'posts', {
         id: postId,
-        previousData: postResource.toObject()
+        previousData: postResource.toObject(),
+        headers: { foo: 'bar' }
       })
 
       expect(result).to.eql({

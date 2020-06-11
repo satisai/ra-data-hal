@@ -1,4 +1,4 @@
-import { append, reduce, toPairs } from 'ramda'
+import { append, call, keys, reduce, toPairs } from 'ramda'
 
 // Taken from https://gist.github.com/penguinboy/762197
 const flatten = (object, prefix = '') => {
@@ -42,6 +42,22 @@ export const buildFilterParams = filter => ({
         toPairs(flatten(filter))
       )
     : []
+})
+
+export const buildHeaders = (headers = {}) => ({
+  headers: reduce(
+    (acc, key) => {
+      let val = headers[key]
+      if (val instanceof Function) {
+        acc[key] = call(val)
+      } else {
+        acc[key] = val
+      }
+      return acc
+    },
+    {},
+    keys(headers)
+  )
 })
 
 export const buildReactAdminParams = ({ pagination, sort, filter }) => ({

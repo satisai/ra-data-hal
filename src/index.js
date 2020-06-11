@@ -8,11 +8,11 @@ import {
   DELETE,
   HttpError
 } from 'react-admin'
-import { assoc, last, path, split } from 'ramda'
+import { assoc, last, mergeRight, path, split } from 'ramda'
 import { Navigator } from 'halboy'
 import inflection from 'inflection'
 import qs from 'qs'
-import { buildReactAdminParams } from './query'
+import { buildHeaders, buildReactAdminParams } from './query'
 
 const capitalizeFirstLetter = string =>
   string.charAt(0).toUpperCase() + string.slice(1)
@@ -49,22 +49,44 @@ const navToResult = async (navigator, method = 'get', ...args) => {
   return resourceResult
 }
 
-const getSingleResult = async (navigator, resourceName, id) => {
-  return navToResult(navigator, 'get', inflection.singularize(resourceName), {
-    id: id
-  })
+const getSingleResult = async (navigator, resourceName, id, ...args) => {
+  return navToResult(
+    navigator,
+    'get',
+    inflection.singularize(resourceName),
+    id,
+    ...args
+  )
 }
 
 const navToResource = async (navigator, method = 'get', ...args) => {
   return (await navToResult(navigator, method, ...args)).resource()
 }
 
-const getSingleResource = async (navigator, resourceName, id) => {
-  return (await getSingleResult(navigator, resourceName, id)).resource()
+const getSingleResource = async (navigator, resourceName, id, ...args) => {
+  return (await getSingleResult(
+    navigator,
+    resourceName,
+    id,
+    ...args
+  )).resource()
 }
 
-const handleRequest = async (apiUrl, type, resourceName, params) => {
-  const discoveryResult = await Navigator.discover(apiUrl)
+const handleRequest = async (
+  apiUrl,
+  type,
+  resourceName,
+  params,
+  globals = {}
+) => {
+  let headers = mergeRight(params.headers, globals.headers)
+  let headerOptions = {
+    ...buildHeaders(headers)
+  }
+
+  const discoveryResult = await Navigator.discover(apiUrl, {
+    http: { ...headerOptions }
+  })
 
   switch (type) {
     case GET_LIST: {
@@ -75,6 +97,7 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
         resourceName,
         fullParams,
         {
+          ...headerOptions,
           paramsSerializer: params =>
             qs.stringify(params, { arrayFormat: 'repeat' })
         }
@@ -92,7 +115,8 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
         data: (await getSingleResource(
           discoveryResult,
           resourceName,
-          getId(params.id)
+          { id: getId(params.id) },
+          { ...headerOptions }
         )).toObject()
       }
     }
@@ -119,7 +143,8 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
           (await getSingleResource(
             discoveryResult,
             resourceName,
-            id
+            { id },
+            { ...headerOptions }
           )).toObject()
         )
       )
@@ -137,6 +162,7 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
           [params.target]: params.id
         },
         {
+          ...headerOptions,
           paramsSerializer: params =>
             qs.stringify(params, { arrayFormat: 'repeat' })
         }
@@ -170,11 +196,12 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
       const getResult = await getSingleResult(
         discoveryResult,
         inflection.singularize(resourceName),
-        getId(params.id)
+        { id: getId(params.id) },
+        { ...headerOptions }
       )
       const data = getResult.resource().toObject()
 
-      await getResult.delete('self')
+      await getResult.delete('self', null, {}, headerOptions)
 
       return { data: data }
     }
@@ -184,12 +211,18 @@ const handleRequest = async (apiUrl, type, resourceName, params) => {
   }
 }
 
-export default (apiUrl, { debug = false } = {}) => {
+export default (apiUrl, { debug = false, ...globals } = {}) => {
   return async (type, resourceName, params) => {
     let response
 
     try {
-      response = await handleRequest(apiUrl, type, resourceName, params)
+      response = await handleRequest(
+        apiUrl,
+        type,
+        resourceName,
+        params,
+        globals
+      )
     } catch (error) {
       debug && log({ type, resourceName, params }, error)
       throw error

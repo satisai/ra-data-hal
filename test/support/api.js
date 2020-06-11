@@ -2,14 +2,18 @@ import nock from 'nock'
 import { Resource } from 'halboy'
 import qs from 'qs'
 
-export const onDiscover = (url, links) =>
-  nock(url)
+export const onDiscover = (url, links, { headers, badheaders } = {}) =>
+  nock(url, {
+    reqheaders: headers,
+    badheaders: badheaders
+  })
     .get('/')
     .reply(200, new Resource().addLinks(links).toObject())
 
-export const onGet = (url, path, resource, { headers } = {}) => {
+export const onGet = (url, path, resource, { headers, badheaders } = {}) => {
   nock(url, {
-    reqHeaders: headers,
+    reqheaders: headers,
+    badheaders: badheaders,
     paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
@@ -61,6 +65,7 @@ export const onDelete = (url, path, status = 200, { headers } = {}) => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
   })
+    .matchHeader('foo', 'bar')
     .delete(path)
     .reply(status)
 }
