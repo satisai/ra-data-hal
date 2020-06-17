@@ -128,7 +128,8 @@ const handleRequest = async (
         'post',
         resourceName,
         body,
-        body
+        body,
+        headerOptions
       )
       const data = resource.toObject()
 
@@ -185,7 +186,8 @@ const handleRequest = async (
         'put',
         inflection.singularize(resourceName),
         body,
-        body
+        body,
+        headerOptions
       )
       const data = resource.toObject()
 
@@ -214,7 +216,6 @@ const handleRequest = async (
 export default (apiUrl, { debug = false, ...globals } = {}) => {
   return async (type, resourceName, params) => {
     let response
-
     try {
       response = await handleRequest(
         apiUrl,
