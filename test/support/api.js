@@ -31,7 +31,7 @@ export const onPost = (
   { headers } = {}
 ) => {
   nock(url, {
-    reqHeaders: headers,
+    reqheaders: headers,
     paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
@@ -49,7 +49,7 @@ export const onPut = (
   { headers } = {}
 ) => {
   nock(url, {
-    reqHeaders: headers,
+    reqheaders: headers,
     paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
@@ -60,7 +60,7 @@ export const onPut = (
 
 export const onDelete = (url, path, status = 200, { headers } = {}) => {
   nock(url, {
-    reqHeaders: headers,
+    reqheaders: headers,
     paramsSerializer: params => {
       return qs.stringify(params, { arrayFormat: 'repeat' })
     }
