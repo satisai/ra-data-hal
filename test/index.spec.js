@@ -407,10 +407,8 @@ describe('react-admin HAL data provider', () => {
         200,
         {
           headers: {
-            'accept': 'application/json, text/plain, */*',
-            'content-type': 'application/json;charset=utf-8',
-            'user-agent': _ => true,
-            'content-length': _ => true
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
           }
         }
       )
@@ -485,10 +483,8 @@ describe('react-admin HAL data provider', () => {
         422,
         {
           headers: {
-            'accept': 'application/json, text/plain, */*',
-            'content-type': 'application/json;charset=utf-8',
-            'user-agent': _ => true,
-            'content-length': _ => true
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
           }
         }
       )
@@ -895,20 +891,16 @@ describe('react-admin HAL data provider', () => {
         },
         {
           headers: {
-            'accept': 'application/json, text/plain, */*',
-            'header1': 'value',
-            'header2': 'value2',
-            'user-agent': _ => true
+            header1: val => val === 'value',
+            header2: val => val === 'value2'
           }
         }
       )
 
       api.onPut(apiUrl, `/posts/${postId}`, payload, putResource, 200, {
         headers: {
-          'accept': 'application/json, text/plain, */*',
-          'content-type': 'application/json;charset=utf-8',
-          'user-agent': _ => true,
-          'content-length': _ => true
+          header1: val => val === 'value',
+          header2: val => val === 'value2'
         }
       })
 
