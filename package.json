@@ -1,6 +1,6 @@
 {
   "name": "ra-data-hal",
-  "version": "2.7.1",
+  "version": "2.7.1-SATISAI",
   "description": "A HAL data provider for react-admin.",
   "main": "lib/index.js",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/b-social/ra-data-hal.git"
+    "url": "git+ssh://git@github.com/satisai/ra-data-hal.git"
   },
   "keywords": [
     "hal",
@@ -27,9 +27,9 @@
   "author": "Toby Clemson",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/b-social/ra-data-hal/issues"
+    "url": "https://github.com/satisai/ra-data-hal/issues"
   },
-  "homepage": "https://github.com/b-social/ra-data-hal#readme",
+  "homepage": "https://github.com/satisai/ra-data-hal#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },

@@ -14,8 +14,8 @@ const flatten = (object, prefix = '') => {
 export const buildPaginationParams = pagination => {
   if (pagination && pagination.page && pagination.perPage) {
     return {
-      page: pagination.page,
-      perPage: pagination.perPage
+      offset: (pagination.page - 1) * pagination.perPage,
+      limit: pagination.perPage
     }
   }
 
@@ -62,6 +62,6 @@ export const buildHeaders = (headers = {}) => ({
 
 export const buildReactAdminParams = ({ pagination, sort, filter }) => ({
   ...buildPaginationParams(pagination),
-  ...buildSortParams(sort),
+  // ...buildSortParams(sort),
   ...buildFilterParams(filter)
 })

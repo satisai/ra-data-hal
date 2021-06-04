@@ -102,20 +102,20 @@ const handleRequest = async (
             qs.stringify(params, { arrayFormat: 'repeat' })
         }
       )
-      const total = resource.getProperty(
-        `total${capitalizeFirstLetter(resourceName)}`
-      )
+      const total = resource.getProperty('total')
       const data = resource.getResource(resourceName).map(r => r.toObject())
 
       return { data, total }
     }
 
     case GET_ONE: {
+      const paramsTransformed = params.id ? { id: getId(params.id) } : params
+      console.log('GET_ONE', params, paramsTransformed)
       return {
         data: (await getSingleResource(
           discoveryResult,
           resourceName,
-          { id: getId(params.id) },
+          paramsTransformed,
           { ...headerOptions }
         )).toObject()
       }
